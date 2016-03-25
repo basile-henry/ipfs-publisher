@@ -6,13 +6,13 @@ module Network.IPFS.Publisher(
     initDir, publish, saveConfig, readConfig)
 where
 
-
 import           Data.Aeson           (FromJSON, ToJSON, decode, encode)
 import           Data.ByteString.Lazy (readFile, writeFile)
 import           Data.ByteString.UTF8 (toString)
+import           Data.Maybe           (fromJust)
 import           Data.Time            (getCurrentTime)
 import           GHC.Generics         (Generic)
-import           Network.IPFS         (addDir)
+import           Network.IPFS         (FileHash (..), addDir)
 import           Network.IPFS.API     (Endpoint (..))
 import qualified Network.IPNS         as IPNS
 import           Prelude              hiding (readFile, writeFile)
@@ -46,7 +46,7 @@ initDir dir = Config dir []
 
 publish :: Endpoint -> Config -> IO Config
 publish endpoint conf@Config{directory, versions} = do
-    h   <- addDir endpoint directory
+    h   <- fileHash . fromJust <$> addDir endpoint directory
     now <- getCurrentTime
     let new_conf = conf{versions = versions ++ [Version (show now) (toString h)]}
     if length versions > 0 && (hash (last versions) == toString h)
